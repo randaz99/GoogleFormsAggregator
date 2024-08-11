@@ -1,0 +1,54 @@
+function logOptionsWithUserNamesSortedByQuestion() {
+  var form = FormApp.openById('18yyxisclZHR18xSyGhhq0vHzeuW_E9WzmAWDEMqR-gM'); // Replace with your actual Form ID
+  var formResponses = form.getResponses();
+  var questionUserMap = {}; // Object to hold questions, options, and corresponding user names
+
+  // Iterate over all form responses
+  formResponses.forEach(function(formResponse) {
+    var itemResponses = formResponse.getItemResponses();
+    var respondentName = ""; // Placeholder for respondent's name
+
+    // First, find the respondent's name from the responses
+    for (var i = 0; i < itemResponses.length; i++) {
+      var itemResponse = itemResponses[i];
+      // Assuming the name question contains the word 'Name'
+      if (itemResponse.getItem().getTitle().toLowerCase().includes('name')) {
+        respondentName = itemResponse.getResponse();
+        break; // Exit the loop once the name is found
+      }
+    }
+
+    // Next, iterate over all item responses in a single form response
+    itemResponses.forEach(function(itemResponse) {
+      if (itemResponse.getItem().getType() === FormApp.ItemType.CHECKBOX) {
+        var questionTitle = itemResponse.getItem().getTitle();
+        var selectedOptions = itemResponse.getResponse(); // Get selected options for the checkbox item
+
+        // Initialize question in map if not already present
+        if (!questionUserMap[questionTitle]) {
+          questionUserMap[questionTitle] = {};
+        }
+
+        // Iterate over selected options and map them to the respondent name
+        selectedOptions.forEach(function(option) {
+          if (!questionUserMap[questionTitle][option]) {
+            questionUserMap[questionTitle][option] = [];
+          }
+          // Only add the name if it's found
+          if (respondentName) {
+            questionUserMap[questionTitle][option].push(respondentName);
+          }
+        });
+      }
+    });
+  });
+
+  // Log the results sorted by question, including the count of names for each option
+  for (var question in questionUserMap) {
+    Logger.log('Question: ' + question);
+    for (var option in questionUserMap[question]) {
+      var nameCount = questionUserMap[question][option].length; // Get the count of names for the option
+      Logger.log('  Option: ' + option + ' (' + nameCount + '): ' + questionUserMap[question][option].join(', '));
+    }
+  }
+}
